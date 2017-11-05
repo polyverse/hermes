@@ -12,7 +12,11 @@ Hermes provides an infrastructure-neutral status reporting channel, and more so,
 
 ## Data Schema
 
-All State is stored as Key-Value pairs of strings, along with one piece of metadata per key:
+All State is stored as Key-Value pairs of strings. Each key must meet the following contract:
+1. It must not begin or end with a "."
+2. It may contain any letters (upper or lowercase), digits, underscore (\_) and dot (\.)
+3. The regex for it is: <pre>^[\w][\w\.]*[\w]$</pre>
+
 1. The last time the key was updated.
 2. The TTL of the key (if not updated within that TTL again, the key is dropped and no longer honored.)
 
