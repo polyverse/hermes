@@ -2,13 +2,17 @@
 
 Hermes is a Status collecting, publishing, and reporting framework in complex supervision trees, especially those created by massive microservice deployments.
 
-## Status as a Fundamental Monitoring Type
+## "Status" as a Fundamental Monitoring Channel for Reactive Applications
 
 Status is the current "state" of a system with ZERO KNOWLEDGE of *WHY* the system is in that state, *HOW* it got there, or *WHAT* can make it change.
 
-Status is a machine and human-understandable representation of the state a system/component is at any given time.
+Status is a machine and human-understandable representation of the state a system/component is at any given time, for the intent and purpose of reacting to it. Traditional applications have two main channels for monitoring their state - logging, and some kind of aggregate metrics. However, when writing controllers or supervisors that operate on those applications, these controllers need to live outside the fabric of the apps, and must be connected through elaborate and complex channels to the logs/metrics destination. This means that supervision trees are difficult to set up.
 
-Status differs in content, intent and interpretation from logging and metrics. *Logs* are a stream of temporal activity that only makes sense when analyzed over a window. For instance, reading one single line of log doesn't tell you what the current state of the system that emitted it is. *Metrics* make sense as an aggregated macro snapshot of system behavior and performance. Metrics tell you what tends to happen or what has tended to happen in the past.
+Hermes provides an infrastructure-neutral status reporting channel, and more so, a consistent standard to do it. This means that when you write controllers or supervisors to launch more components (such as workers, nodes, etc.), those controllers can use Hermes to consistently monitor the state of those workers, and the controllers' controllers can monitor the tree.
 
-Status an important concept due to the meteoric rise of self-correcting large numbers of small servies. When developing or deploying services locally, for instance, you may not necessarily have a complex analytics engine to capture those logs and feedback behavior. When launching a quick and dirty demo you might not find aggregated logs over a complete "set" of services, and even when available, might not be easy to interpret.
+## Data Schema
+
+All State is stored as Key-Value pairs of strings, along with one piece of metadata per key:
+1. The last time the key was updated.
+2. The TTL of the key (if not updated within that TTL again, the key is dropped and no longer honored.)
 
