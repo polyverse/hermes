@@ -21,7 +21,7 @@ echo "Starting a fourth child app without push..."
 ./test_app -serveraddr ":9095" -children "subchild2=http://localhost:9097" &
 
 echo "Starting a grand-child...."
-./test_app -serveraddr ":9096" --parenturl "http://localhost:9095" -ourname "subchild1" &
+./test_app -serveraddr ":9097" &
 
 echo "Starting a second grand-child..."
-./test_app -serveraddr ":9097"
+HERMES_PARENT_URL=http://localhost:9095 HERMES_MYNAME=subchild1 ./test_app -serveraddr ":9096" -parentfromenv=true &
