@@ -122,6 +122,7 @@ message: "Starting logger..."
 ### Child keys
 
 The special separator slash (/) is used to indicate a child process's namespace.
+
 *Examples:*
 <pre>
 status: "pending"
