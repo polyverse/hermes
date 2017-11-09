@@ -66,7 +66,7 @@ var addr = flag.String("hermes-address", ":9091", "The address to listen on for 
 
 func main() {
 	flag.Parse()
-	http.Handle("/status", hermes.Handler())
+	http.Handle("/status", hermes.Handler)
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 </pre>
