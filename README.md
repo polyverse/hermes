@@ -114,13 +114,17 @@ All State is stored as Key-Value pairs of strings. Each key must meet the follow
 It is suggested that dots (.) be used to separate subsystems or namespaces within a process.
 
 *Examples:*
+<pre>
 status: "launching"
 message: "Starting logger..."
+</pre>
 
 ### Child keys
 
 The special separator slash (/) is used to indicate a child process's namespace.
-
+*Examples:*
+<pre>
 status: "pending"
 component1/status: "launching"
 component1/message: "Starting logger..."
+</pre>
