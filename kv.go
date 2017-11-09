@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -25,7 +26,7 @@ var (
 
 	hasParent bool = false
 	ourName   string
-	parentUrl *url.URL
+	parentUrl url.URL
 
 	NoEnvFoundErr  = fmt.Errorf("No Hermes Environment settings found. Must set %s and %s.", HERMES_MYNAME_ENV, HERMES_PARENT_URL_ENV)
 	NoParentSetErr = fmt.Errorf("No Hermes Parent set. Please call SetParent or SetParentFromEnv methods to set a parent before pushing a model to it.")
@@ -45,7 +46,12 @@ func SetDefaultPushToParent(pushToParent bool) {
 // The first parameter is "myname" which is the name of the current process
 // as the parent should see it.
 // The second parameter is the URL where the parent may be found (where to POST).
-func SetParent(myname string, url *url.URL) {
+func SetParent(myname string, url url.URL) {
+	if myname == "" {
+		logger.Errorf("Hermes: In SetParent, myname set to empty. Unable to push to parent without a name.")
+		return
+	}
+
 	hasParent = true
 	ourName = myname
 	parentUrl = url
@@ -73,7 +79,7 @@ func SetParentFromEnv() error {
 		return errors.Wrapf(err, "Unable to parse %s value %s into a URL.", HERMES_PARENT_URL_ENV, parenturlstr)
 	}
 
-	SetParent(myname, parentUrl)
+	SetParent(myname, *parentUrl)
 
 	return nil
 }
@@ -142,11 +148,12 @@ func GetStatusesWithPrefix(prefix string) map[string]string {
 
 func pushKeyToParent(key string, value string, ttl time.Duration) {
 	if !hasParent {
+		logger.Debugf("Hermes: No parent set. Not pushing key %s to parent.", key)
 		return
 	}
 
-	var m Model
-	m[key] = &ModelValue{
+	m := newEmptyModel()
+	m[ourName+CHILD_SEPARATOR+key] = &ModelValue{
 		Value: value,
 		TTL:   ttl.Seconds(),
 		Age:   0,
@@ -157,6 +164,7 @@ func pushKeyToParent(key string, value string, ttl time.Duration) {
 
 func pushModelToParent(m Model) {
 	if !hasParent {
+		logger.Debugf("Hermes: No parent set. Not pushing model %v to parent.", m)
 		return
 	}
 
@@ -166,9 +174,14 @@ func pushModelToParent(m Model) {
 		return
 	}
 
+	if logger.Level >= logrus.DebugLevel {
+		logger.Debugf("Pushing this model to parent %s: %s", parentUrl.String(), string(jstr))
+	}
+
 	resp, err := http.DefaultClient.Post(parentUrl.String(), CONTENT_TYPE_JSON, bytes.NewReader(jstr))
 	if err != nil {
 		logger.WithError(err).Errorf("Hermes: Error when writing to parent: %s", parentUrl.String())
+		return
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -181,19 +194,18 @@ func PushModelToParent() error {
 		return NoParentSetErr
 	}
 
-	m := generateModel()
+	m := generateModel(ourName + CHILD_SEPARATOR)
 	pushModelToParent(m)
 
 	return nil
 }
 
 func PushModelToParentForever(ctx context.Context, interval time.Duration) error {
-	if !hasParent {
-		return NoParentSetErr
-	}
-
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
+
+	//First push is immediate
+	PushModelToParent()
 
 	for {
 		select {
@@ -208,6 +220,10 @@ func PushModelToParentForever(ctx context.Context, interval time.Duration) error
 // Scrapes a Hermes endpoint, and pulls its keys
 // as child keys in the current model
 func ScrapeStatus(childName string, url url.URL) error {
+	values := url.Query()
+	values.Set(QUERY_PARAM_TYPE_KEY, QUERY_PARAM_TYPE_VALUE_JSON)
+	url.RawQuery = values.Encode()
+
 	resp, err := http.DefaultClient.Get(url.String())
 	if err != nil {
 		logger.WithError(err).Errorf("Hermes: Error when scraping child %s at URL %s.", childName, url.String())
@@ -220,13 +236,14 @@ func ScrapeStatus(childName string, url url.URL) error {
 		return err
 	}
 
-	var m Model
+	m := newEmptyModel()
 	err = json.Unmarshal(body, &m)
 	if err != nil {
-		logger.WithError(err).Errorf("Hermes: Error when JSON-parsing body for child %s at URL %s.", childName, url.String())
+		logger.WithError(err).Errorf("Hermes: Error when JSON-parsing body for child %s at URL %s: %s", childName, url.String(), string(body))
 		return err
 	}
 
+	logger.Debugf("Hermes: Scraped status from child %s: %v", childName, m)
 	insertModel(childName, m)
 
 	return nil
@@ -235,6 +252,9 @@ func ScrapeStatus(childName string, url url.URL) error {
 func ScrapeStatusForever(ctx context.Context, interval time.Duration, childName string, url url.URL) error {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
+
+	//first scrape is immediate
+	ScrapeStatus(childName, url)
 
 	for {
 		select {

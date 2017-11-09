@@ -30,7 +30,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGet(w http.ResponseWriter, r *http.Request) {
-	model := generateModel()
+	model := generateModel("")
 
 	respType := resolveResponseType(r)
 	switch respType {
@@ -57,7 +57,7 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var m Model = make(map[string]*ModelValue)
+	var m Model = newEmptyModel()
 	err = json.Unmarshal(body, &m)
 	if err != nil {
 		malformedRequest(w, fmt.Sprintf("Error when parsing POST'ed JSON: %s", err.Error()))
@@ -96,7 +96,7 @@ func textResponse(w http.ResponseWriter, rm Model) {
 }
 
 func jsonResponse(w http.ResponseWriter, rm Model) {
-	jstr, err := json.Marshal(rm)
+	jstr, err := json.MarshalIndent(rm, "", "    ")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))

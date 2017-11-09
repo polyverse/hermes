@@ -57,7 +57,7 @@ func RunGC() {
 
 	changed := false
 	for key, s := range statusStore {
-		if s.expiresAt.After(time.Now()) {
+		if s.expiresAt.Before(time.Now()) {
 			if logger.Level >= logrus.DebugLevel {
 				logger.Debugf("Hermes: Key %s was created at %s with TTL %s (making expiry %s). It is now expired since the time is %s. Purging it.", key, s.createdAt.String(), s.ttl.String(), s.expiresAt.String(), time.Now().String())
 			}

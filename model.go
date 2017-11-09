@@ -14,13 +14,13 @@ type ModelValue struct {
 
 type Model map[string]*ModelValue
 
-func generateModel() Model {
+func generateModel(prefix string) Model {
 
 	sc, _ := shallowCopyStore()
 
 	rm := make(map[string]*ModelValue, len(sc))
 	for key, value := range sc {
-		rm[key] = &ModelValue{
+		rm[prefix+key] = &ModelValue{
 			Value: value.value,
 			TTL:   value.ttl.Seconds(),
 			Age:   time.Since(value.createdAt).Seconds(),
@@ -39,4 +39,8 @@ func insertModel(childName string, m Model) {
 	for key, val := range m {
 		putStatus(childPrefix+key, val.Value, time.Duration(val.TTL-val.Age)*time.Second)
 	}
+}
+
+func newEmptyModel() Model {
+	return make(map[string]*ModelValue)
 }
