@@ -37,7 +37,8 @@ func insertModel(childName string, m Model) {
 	}
 
 	for key, val := range m {
-		putStatus(childPrefix+key, val.Value, time.Duration(val.TTL-val.Age)*time.Second)
+		// Go through official ReportStatus API so pushes to parent happen
+		ReportStatus(childPrefix+key, val.Value, WithTTL(time.Duration(val.TTL-val.Age)*time.Second))
 	}
 }
 
