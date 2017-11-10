@@ -2,6 +2,16 @@
 
 Hermes is a Status collecting, publishing, and reporting framework in complex supervision trees, especially those created by massive microservice deployments.
 
+The main challenge with monitoring fan-out services (services that start other services) is fundamentally the need for external infrastructure. You must either have a log sink or a metrics sink set up previously. You must then connect your "supervisor" (the service launching other services) to this sink to read status of what's going on. Alternatively, you could reach out to the fabric on which you launch those services (such as Kubernetes), in which case the best visibility you can expect is "Running", "Stopped", or "Not running."
+
+This leads to a lot of side-channel coding and cumbersome workarounds. They lead to vendor-locking, but more so, they lead to infra-lockin! Infra-lockin is when you have to set pre-determined endpoints for your AWS CloudWatch region and so on and so forth. When running on localhost, you have to use other tricks. It's just a nightmare.
+
+Hermes was inspired by Prometheus's simplicit of scrapable endpoints exposing metrics. Hermes exposes state of a system in a similar fashion.
+
+This means when you instrument a component, it exposes it's Hermes status directly which you can query. If it is executed by a parent, the parent is able to receive updates from the child (and others) seamlessly exposing a consolidated status of the tree below it. If the parent is ever executed under a larger parent, that parent seamlessly gains access to the status tree.
+
+For reactive components that are monitoring, changing, adapting, this ability does away with the need to go poll logs from children, or to do creative querying, etc. View the complete state of your system from your supervisor.
+
 ## Getting Started
 
 ### Monitoring a Hermes component
@@ -10,7 +20,7 @@ Hermes is a Status collecting, publishing, and reporting framework in complex su
 For any Hermes-instrumented component, run:
 
 <pre>
-curl http://<component>:9091
+curl http://localhost:9091
 
 status: pending
 child1/status: launching
@@ -22,7 +32,7 @@ child1/message: Starting logger...
 JSON-formatted output provides a bit more metadata, such as a key's creation time, along with its age and prescribed TTL. All durations are in seconds, and all consumers must support floating point numbers. They are not required to honor more than the integer part (this rounding UP to the nearst second), but they *MUST NOT* fail when they encounter a decimal.
 
 <pre>
-curl http://<component>:9091?format=json
+curl http://localhost:9091?type=json
 {
   "status": {
     "age": 12,
@@ -59,14 +69,14 @@ import (
 	"log"
 	"net/http"
 
-	hermes "github.com/polyverse-security/hermes/client-go"
+	hermes "github.com/polyverse-security/hermes"
 )
 
 var addr = flag.String("hermes-address", ":9091", "The address to listen on for Hermes HTTP requests.")
 
 func main() {
 	flag.Parse()
-	http.Handle("/status", hermes.Handler)
+	http.Handle("/status", hermes.GetHandler())
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 </pre>
@@ -78,14 +88,13 @@ func main() {
 package runner
 
 import (
-	hermes "github.com/polyverse-security/hermes/client-go"
+	hermes "github.com/polyverse-security/hermes"
 )
 
 func run() {
-  hermes.Report(
+  hermes.ReportStatus(
     "runner.status", // Key
-    "running",  // Value
-    15) //TTL
+    "running")  // Value
 }
 </pre>
 
