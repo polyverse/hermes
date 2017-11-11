@@ -90,7 +90,7 @@ func malformedRequest(w http.ResponseWriter, message string) {
 func textResponse(w http.ResponseWriter, rm Model) {
 	//simplify model for text case
 	w.WriteHeader(http.StatusOK)
-	for _, key := range keys {
+	for _, key := range rm.SortedKeys() {
 		value := rm[key]
 		w.Write([]byte(fmt.Sprintf("%s: %s\n", key, value.Value)))
 	}
