@@ -162,6 +162,7 @@ func pushKeyToParent(key string, value string, ttl time.Duration) {
 	pushModelToParent(m)
 }
 
+var lastPushedModelJstr string
 func pushModelToParent(m Model) {
 	if !hasParent {
 		logger.Debugf("Hermes: No parent set. Not pushing model %v to parent.", m)
@@ -173,6 +174,12 @@ func pushModelToParent(m Model) {
 		logger.WithError(err).Errorf("Hermes: Unable to serialize Model %v into JSON.", m)
 		return
 	}
+
+	if lastPushedModelJstr == string(jstr) {
+		logger.Debugf("Model contents haven't changed since last push to parent. Ignoring for efficiency.")
+		return
+	}
+	lastPushedModelJstr = string(jstr)
 
 	if logger.Level >= logrus.DebugLevel {
 		logger.Debugf("Pushing this model to parent %s: %s", parentUrl.String(), string(jstr))
@@ -194,7 +201,7 @@ func PushModelToParent() error {
 		return NoParentSetErr
 	}
 
-	m := generateModel(ourName + CHILD_SEPARATOR)
+	m := generateModel(ourName + CHILD_SEPARATOR, true)
 	pushModelToParent(m)
 
 	return nil

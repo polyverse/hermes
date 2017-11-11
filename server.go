@@ -30,7 +30,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGet(w http.ResponseWriter, r *http.Request) {
-	model := generateModel("")
+	model := generateModel("", false)
 
 	respType := resolveResponseType(r)
 	switch respType {

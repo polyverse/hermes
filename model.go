@@ -14,20 +14,29 @@ type ModelValue struct {
 
 type Model map[string]*ModelValue
 
-func generateModel(prefix string) Model {
+var (
+	cachedModel Model
+	cachedChangeIndex int64
+)
+func generateModel(prefix string, cached bool) Model {
 
-	sc, _ := shallowCopyStore()
+	if cached == false || cachedModel == nil || cachedChangeIndex < GetChangeIndex() {
+		sc, ci := shallowCopyStore()
 
-	rm := make(map[string]*ModelValue, len(sc))
-	for key, value := range sc {
-		rm[prefix+key] = &ModelValue{
-			Value: value.value,
-			TTL:   value.ttl.Seconds(),
-			Age:   time.Since(value.createdAt).Seconds(),
+		rm := make(map[string]*ModelValue, len(sc))
+		for key, value := range sc {
+			rm[prefix+key] = &ModelValue{
+				Value: value.value,
+				TTL:   value.ttl.Seconds(),
+				Age:   time.Since(value.createdAt).Seconds(),
+			}
 		}
+
+		cachedChangeIndex = ci
+		cachedModel = rm
 	}
 
-	return rm
+	return cachedModel
 }
 
 func insertModel(childName string, m Model) {
