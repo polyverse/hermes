@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sort"
 )
 
 const (
@@ -91,13 +90,6 @@ func malformedRequest(w http.ResponseWriter, message string) {
 func textResponse(w http.ResponseWriter, rm Model) {
 	//simplify model for text case
 	w.WriteHeader(http.StatusOK)
-	keys := make([]string, 0, len(rm))
-	for key, _ := range rm {
-		keys = append(keys, key)
-	}
-
-	sort.Strings(keys)
-
 	for _, key := range keys {
 		value := rm[key]
 		w.Write([]byte(fmt.Sprintf("%s: %s\n", key, value.Value)))

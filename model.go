@@ -1,6 +1,9 @@
 package hermes
 
-import "time"
+import (
+	"sort"
+	"time"
+)
 
 const (
 	CHILD_SEPARATOR = "/"
@@ -12,7 +15,34 @@ type ModelValue struct {
 	TTL   float64 `json:"ttl"`
 }
 
+type ModelKeys []string
+
+func (p ModelKeys) Len() int      { return len(p) }
+func (p ModelKeys) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+func (p ModelKeys) Less(i, j int) bool {
+
+	// TODO: Fill in a better ordering function.
+	s1 := p[i]
+	s2 := p[j]
+
+	return s1 < s2
+}
+
+// Sort is a convenience method.
+func (p ModelKeys) Sort() { sort.Sort(p) }
+
 type Model map[string]*ModelValue
+
+func (m Model) SortedKeys() []string {
+	keys := ModelKeys(make([]string, 0, len(m)))
+	for key, _ := range m {
+		keys = append(keys, key)
+	}
+
+	keys.Sort()
+
+	return keys
+}
 
 var (
 	cachedModel       Model
