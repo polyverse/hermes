@@ -15,9 +15,10 @@ type ModelValue struct {
 type Model map[string]*ModelValue
 
 var (
-	cachedModel Model
+	cachedModel       Model
 	cachedChangeIndex int64
 )
+
 func generateModel(prefix string, cached bool) Model {
 
 	if cached == false || cachedModel == nil || cachedChangeIndex < GetChangeIndex() {

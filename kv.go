@@ -113,6 +113,12 @@ func ReportStatus(key string, value string, optlist ...StatusOpt) {
 		o(opt)
 	}
 
+	// All status reports are also log entries.
+	logger.WithFields(logrus.Fields{
+		"Key":   key,
+		"Value": value,
+	}).Infof("Hermes Status Report.")
+
 	putStatus(key, value, opt.ttl)
 
 	if opt.pushToParent {
@@ -163,6 +169,7 @@ func pushKeyToParent(key string, value string, ttl time.Duration) {
 }
 
 var lastPushedModelJstr string
+
 func pushModelToParent(m Model) {
 	if !hasParent {
 		logger.Debugf("Hermes: No parent set. Not pushing model %v to parent.", m)
@@ -201,7 +208,7 @@ func PushModelToParent() error {
 		return NoParentSetErr
 	}
 
-	m := generateModel(ourName + CHILD_SEPARATOR, true)
+	m := generateModel(ourName+CHILD_SEPARATOR, true)
 	pushModelToParent(m)
 
 	return nil
