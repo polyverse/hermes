@@ -1,1 +1,1 @@
-killall test_app
+killall standalone
