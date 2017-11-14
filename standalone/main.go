@@ -18,8 +18,14 @@ var (
 	parentUrl     string
 	ourName       string
 	parentFromEnv bool
+	pushToParent  bool
 
 	children string
+
+	generateFake bool
+
+	help      bool
+	shortHelp bool
 )
 
 func main() {
@@ -27,11 +33,21 @@ func main() {
 
 	flag.StringVar(&parentUrl, "parenturl", "", "Sets the Parent URL to push to.")
 	flag.StringVar(&ourName, "ourname", "", "Sets our name for the parent to get updates from.")
-	flag.BoolVar(&parentFromEnv, "parentfromenv", false, "Sets our parent parameters from Environment")
+	flag.BoolVar(&parentFromEnv, "parentfromenv", false, fmt.Sprintf("Sets our parent parameters from Environment. You must set two environment variables %s and %s.", hermes.HERMES_PARENT_URL_ENV, hermes.HERMES_MYNAME_ENV))
+	flag.BoolVar(&pushToParent, "pushtoparent", true, "Should we push each key update to the parent immediately?")
 
 	flag.StringVar(&children, "children", "", "Set scraping children with the form: 'childname1=http://childurl1,childname2=http://childurl2'")
 
+	flag.BoolVar(&generateFake, "generate_fake_keys", false, "Generate fake keys (mainly used for testing connectivity.)")
+	flag.BoolVar(&help, "help", false, "Display help/usage")
+	flag.BoolVar(&shortHelp, "?", false, "Display help/usage")
+
 	flag.Parse()
+
+	if help || shortHelp {
+		printUsage()
+		return
+	}
 
 	if parentFromEnv {
 		hermes.SetParentFromEnv()
@@ -45,10 +61,13 @@ func main() {
 		hermes.SetParent(ourName, *u)
 	}
 
-	hermes.SetDefaultPushToParent(false)
+	hermes.SetDefaultPushToParent(pushToParent)
 
 	go hermes.PushModelToParentForever(context.Background(), time.Duration(30)*time.Second)
-	go generateHermesStatusUpdates()
+
+	if generateFake {
+		go generateHermesStatusUpdates()
+	}
 
 	if children != "" {
 		childs := strings.Split(children, ",")
@@ -77,4 +96,23 @@ func generateHermesStatusUpdates() {
 
 		time.Sleep(time.Duration(5) * time.Second)
 	}
+}
+
+func printUsage() {
+	fmt.Println(
+		`Usage: Acts as a Hermes standalone collector/relayer.
+
+Hermes is a framework to publish status updates across Supervision trees. For more details, please visit
+the github repository at: https://github.com/polyverse-security/hermes
+
+This standalone app can be set as the parent from any Hermes-instrumented component, and can act
+as the root/default collector where you can view all statuses. As a parent, this standalone app
+can either have statuses pushed to it, or scrape child URLs.
+
+Optionally, this component can have a parent set to which it can push/relay all keys itself.
+
+Flags:
+`)
+
+	flag.PrintDefaults()
 }

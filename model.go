@@ -3,6 +3,7 @@ package hermes
 import (
 	"sort"
 	"time"
+	"strings"
 )
 
 const (
@@ -25,7 +26,17 @@ func (p ModelKeys) Less(i, j int) bool {
 	s1 := p[i]
 	s2 := p[j]
 
-	return s1 < s2
+	s1slash := strings.Contains(s1, "/")
+	s2slash := strings.Contains(s2, "/")
+
+	if s1slash == s2slash {
+		//either both contain slashes, or neither contains slashes
+		return s1 < s2
+	} else if s2slash && !s1slash {
+		//s2 has a slash, but not s1. s1 comes first.
+		return true
+	}
+	return false
 }
 
 // Sort is a convenience method.
