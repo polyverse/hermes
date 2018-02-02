@@ -2,8 +2,8 @@ package hermes
 
 import (
 	"sort"
-	"time"
 	"strings"
+	"time"
 )
 
 const (

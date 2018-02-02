@@ -69,7 +69,7 @@ import (
 	"log"
 	"net/http"
 
-	hermes "github.com/polyverse-security/hermes"
+	hermes "github.com/polyverse/hermes"
 )
 
 var addr = flag.String("hermes-address", ":9091", "The address to listen on for Hermes HTTP requests.")
@@ -88,7 +88,7 @@ func main() {
 package runner
 
 import (
-	hermes "github.com/polyverse-security/hermes"
+	hermes "github.com/polyverse/hermes"
 )
 
 func run() {

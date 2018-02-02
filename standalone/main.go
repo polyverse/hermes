@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/polyverse-security/hermes"
+	"github.com/polyverse/hermes"
 )
 
 var (
@@ -103,7 +103,7 @@ func printUsage() {
 		`Usage: Acts as a Hermes standalone collector/relayer.
 
 Hermes is a framework to publish status updates across Supervision trees. For more details, please visit
-the github repository at: https://github.com/polyverse-security/hermes
+the github repository at: https://github.com/polyverse/hermes
 
 This standalone app can be set as the parent from any Hermes-instrumented component, and can act
 as the root/default collector where you can view all statuses. As a parent, this standalone app
