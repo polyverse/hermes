@@ -117,7 +117,7 @@ func ReportStatus(key string, value string, optlist ...StatusOpt) {
 	logger.WithFields(logrus.Fields{
 		"Key":   key,
 		"Value": value,
-	}).Infof("Hermes Status Report.")
+	}).Debugf("Hermes Status Report.")
 
 	putStatus(key, value, opt.ttl)
 
